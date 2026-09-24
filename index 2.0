@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Сервисная книжка — Haval Dargo</title>
+<style>
+:root {
+  --bg: #f5f5f5;
+  --card: #fff;
+  --primary: #1a73e8;
+  --danger: #d93025;
+  --success: #188038;
+  --warn: #e37400;
+  --text: #202124;
+  --muted: #5f6368;
+  --border: #dadce0;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-bottom: 80px;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
+.topbar {
+  background: var(--primary);
+  color: #fff;
+  padding: 16px 16px 12px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.topbar h1 { font-size: 20px; font-weight: 600; }
+.topbar p { font-size: 13px; opacity: .85; margin-top: 2px; }
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 10;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.nav button {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 10px 4px;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: color .15s;
+  touch-action: manipulation;
+  min-height: 52px;
+}
+.nav button:active { opacity: .6; }
+.nav button .ico { font-size: 22px; line-height: 1; }
+.nav button.active { color: var(--primary); font-weight: 600; }
+.page { display: none; padding: 12px 10px; max-width: 600px; margin: 0 auto; }
+.page.active { display: block; }
+.card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+.card h2 { font-size: 16px; margin-bottom: 8px; }
+.card h3 { font-size: 14px; margin-bottom: 6px; color: var(--muted); }
+.kpi-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.kpi {
+  flex: 1;
+  background: var(--card);
+  border-radius: 12px;
+  padding: 12px 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  text-align: center;
+}
+.kpi .val { font-size: 22px; font-weight: 700; }
+.kpi .lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.kpi.due { border-left: 4px solid var(--danger); }
+.kpi.ok { border-left: 4px solid var(--success); }
+.kpi.warn { border-left: 4px solid var(--warn); }
+label { display: block; font-size: 13px; font-weight: 500; margin: 10px 0 3px; }
+input, textarea, select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 16px;
+  font-family: inherit;
+  background: #fff;
+  touch-action: manipulation;
+}
+input:focus, textarea:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
+textarea { resize: vertical; min-height: 60px; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 10px;
+  touch-action: manipulation;
+  min-height: 48px;
+}
+.btn:active { opacity: .7; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-outline {
+  background: none;
+  border: 1.5px solid var(--border);
+  color: var(--text);
+}
+.btn-small {
+  width: auto;
+  padding: 10px 14px;
+  font-size: 14px;
+  margin-top: 0;
+  min-height: 40px;
+}
+.record {
+  border-left: 3px solid var(--primary);
+  padding: 12px;
+  margin-bottom: 8px;
+  background: var(--card);
+  border-radius: 0 10px 10px 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06);
+}
+.record .date { font-size: 12px; color: var(--muted); }
+.record .mileage { font-weight: 600; font-size: 15px; }
+.record .work { font-size: 14px; margin-top: 4px; color: var(--text); }
+.record .parts { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.record .next { font-size: 12px; color: var(--warn); margin-top: 4px; }
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+}
+.empty-state .ico { font-size: 48px; margin-bottom: 12px; }
+.mileage-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.mileage-input-row input { flex: 1; margin-bottom: 0; }
+.mileage-input-row .btn { width: auto; margin-top: 0; white-space: nowrap; min-height: 48px; }
+.due-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  min-height: 48px;
+}
+.due-item:last-child { border-bottom: none; }
+.due-item .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.due-item .dot.danger { background: var(--danger); }
+.due-item .dot.warn { background: var(--warn); }
+.due-item .dot.ok { background: var(--success); }
+.due-item .dname { flex: 1; font-size: 14px; }
+.due-item .dinfo { font-size: 12px; color: var(--muted); text-align: right; white-space: nowrap; }
+.edit-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 8px;
+  float: right;
+  touch-action: manipulation;
+}
+.hidden { display: none !important; }
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.tag-danger { background: #fce8e6; color: var(--danger); }
+.tag-warn { background: #fef7e0; color: var(--warn); }
+.tag-ok { background: #e6f4ea; color: var(--success); }
+.interval-list label { font-weight: 400; margin: 4px 0; }
+.interval-list input { width: 80px; display: inline; }
+.interval-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; min-height: 44px; }
+.interval-row .iname { flex: 1; font-size: 14px; }
+.interval-row input { width: 90px; }
+.actions-bar { display: flex; gap: 8px; margin-top: 10px; }
+.actions-bar .btn { margin-top: 0; }
+.form-row { display: flex; gap: 8px; }
+.form-row > * { flex: 1; }
+@media (max-width: 420px) {
+  .kpi-row { flex-direction: column; }
+  .form-row { flex-direction: column; }
+  .page { padding: 12px 8px; }
+  .card { padding: 12px; }
+  .due-item .dinfo { font-size: 11px; white-space: normal; }
+  .kpi .val { font-size: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Haval Dargo</h1>
+  <p id="vinDisplay">VIN: LGWFF6A59MH008635</p>
+</div>
+
+<!-- ========== DASHBOARD ========== -->
+<div id="pageDashboard" class="page active">
+  <div class="kpi-row" id="kpiRow">
+    <div class="kpi ok"><div class="val" id="kpiLastMileage">—</div><div class="lbl">Последнее ТО, км</div></div>
+    <div class="kpi ok"><div class="val" id="kpiLastDate">—</div><div class="lbl">Дата последнего ТО</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Текущий пробег</h2>
+    <div class="mileage-input-row">
+      <input type="number" id="currentMileage" placeholder="Например, 35000" inputmode="numeric">
+      <button class="btn btn-primary btn-small" onclick="checkMileage()">Проверить</button>
+    </div>
+  </div>
+
+  <div class="card" id="dueCard">
+    <h2>Что скоро обслуживать</h2>
+    <div id="dueList"><div class="empty-state">Введите текущий пробег</div></div>
+  </div>
+
+  <div class="card" id="lastRecordCard">
+    <h2>Последняя запись</h2>
+    <div id="lastRecordPreview"><div class="empty-state">Записей пока нет</div></div>
+  </div>
+</div>
+
+<!-- ========== HISTORY ========== -->
+<div id="pageHistory" class="page">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2>История обслуживания</h2>
+      <button class="btn btn-small btn-outline" onclick="exportData()">Экспорт</button>
+    </div>
+    <div id="historyList" style="margin-top:8px">
+      <div class="empty-state">Записей пока нет</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ADD RECORD ========== -->
+<div id="pageAdd" class="page">
+  <div class="card">
+    <h2 id="formTitle">Новая запись ТО</h2>
+    <input type="hidden" id="editIndex" value="">
+
+    <label>Дата</label>
+    <input type="date" id="fDate">
+
+    <label>Пробег, км</label>
+    <input type="number" id="fMileage" inputmode="numeric" placeholder="Например, 35000">
+
+    <label>Моторное масло</label>
+    <input type="text" id="fOil" placeholder="Марка, вязкость">
+
+    <div class="form-row">
+      <div><label>Масляный фильтр</label><input type="text" id="fOilFilter" placeholder="Артикул / бренд"></div>
+      <div><label>Воздушный фильтр</label><input type="text" id="fAirFilter" placeholder="Артикул / бренд"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Салонный фильтр</label><input type="text" id="fCabinFilter" placeholder="Артикул / бренд"></div>
+      <div><label>Свечи зажигания</label><input type="text" id="fSparkPlugs" placeholder="Артикул / бренд"></div>
+    </div>
+
+    <label>Прочие работы / примечания</label>
+    <textarea id="fNotes" placeholder="Что ещё делали: масло в АКПП, раздатку, тормоза и т.д."></textarea>
+
+    <label>Следующее ТО (пробег, км)</label>
+    <input type="number" id="fNextMileage" inputmode="numeric" placeholder="Рассчитывается автоматически" onfocus="autoCalcNextMileage()">
+
+    <div class="actions-bar">
+      <button class="btn btn-primary" onclick="saveRecord()">Сохранить</button>
+      <button class="btn btn-outline hidden" id="btnCancelEdit" onclick="cancelEdit()">Отменить</button>
+      <button class="btn btn-danger hidden" id="btnDeleteRecord" onclick="deleteRecord()">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SETTINGS ========== -->
+<div id="pageSettings" class="page">
+  <div class="card">
+    <h2>Автомобиль</h2>
+    <label>Модель</label>
+    <input type="text" id="sCarModel" value="Haval Dargo (CC6460AZ22A)">
+    <label>VIN</label>
+    <input type="text" id="sVin" value="LGWFF6A59MH008635">
+    <label>Год выпуска</label>
+    <input type="text" id="sYear" value="2021">
+  </div>
+
+  <div class="card">
+    <h2>Регламенты ТО</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:8px">Периодичность в км. Источник: официальный регламент Haval Russia.</p>
+    <div id="intervalList" class="interval-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>Синхронизация с Яндекс.Диском</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:8px">Данные будут храниться в облаке и доступны с любого устройства.</p>
+    <label>OAuth-токен Яндекса</label>
+    <input type="password" id="sYaToken" placeholder="Вставьте токен">
+    <div id="yaSyncStatus" style="font-size:13px;color:var(--muted);margin-top:6px"></div>
+    <div class="actions-bar" style="margin-top:8px">
+      <button class="btn btn-small btn-primary" onclick="syncFromDisk()">⬇ Загрузить с Диска</button>
+      <button class="btn btn-small btn-outline" onclick="syncToDisk()">⬆ Сохранить на Диск</button>
+    </div>
+    <button class="btn btn-small btn-outline" onclick="enableAutoSync()" id="btnAutoSync">Автосинхронизация: вкл</button>
+  </div>
+
+  <div class="card">
+    <h2>Данные</h2>
+    <div class="actions-bar">
+      <button class="btn btn-small btn-outline" onclick="importData()">Импорт JSON</button>
+      <button class="btn btn-small btn-outline" onclick="exportData()">Экспорт JSON</button>
+    </div>
+    <button class="btn btn-small btn-danger" onclick="if(confirm('Удалить все записи?')){clearAll()}">Очистить все записи</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
+  </div>
+</div>
+
+<!-- ========== NAV ========== -->
+<div class="nav">
+  <button class="active" onclick="showPage('Dashboard')"><span class="ico">📊</span>Главная</button>
+  <button onclick="showPage('History')"><span class="ico">📋</span>История</button>
+  <button onclick="showPage('Add')"><span class="ico">➕</span>Добавить</button>
+  <button onclick="showPage('Settings')"><span class="ico">⚙️</span>Регламенты</button>
+</div>
+
+<script>
+// ========== DEFAULT INTERVALS ==========
+const DEFAULT_INTERVALS = [
+  { id: 'oil', name: 'Моторное масло + фильтр', km: 10000 },
+  { id: 'oilFirst', name: 'Первое ТО (масло + фильтр)', km: 10000 },
+  { id: 'airFilter', name: 'Воздушный фильтр', km: 30000 },
+  { id: 'cabinFilter', name: 'Салонный фильтр', km: 15000 },
+  { id: 'sparkPlugs', name: 'Свечи зажигания', km: 40000 },
+  { id: 'transOil', name: 'Масло АКПП (7DCT) + фильтр', km: 55000 },
+  { id: 'transferOil', name: 'Масло раздаточной коробки', km: 40000 },
+  { id: 'diffOil', name: 'Масло заднего редуктора', km: 40000 },
+  { id: 'couplingOil', name: 'Масло муфты полного привода', km: 55000 },
+  { id: 'coolant', name: 'Антифриз', km: 70000 },
+  { id: 'brakeFluid', name: 'Тормозная жидкость', km: 40000 },
+  { id: 'belt', name: 'Ремень генератора / помпы', km: 100000 },
+];
+
+// ========== STORAGE ==========
+function loadData() {
+  try {
+    return JSON.parse(localStorage.getItem('dargoServiceBook')) || { records: [], intervals: null, car: null, currentMileage: null };
+  } catch { return { records: [], intervals: null, car: null, currentMileage: null }; }
+}
+function saveData(d) {
+  localStorage.setItem('dargoServiceBook', JSON.stringify(d));
+}
+function getData() {
+  const d = loadData();
+  if (!d.intervals) d.intervals = JSON.parse(JSON.stringify(DEFAULT_INTERVALS));
+  if (!d.records) d.records = [];
+  return d;
+}
+
+// ========== PAGES ==========
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page' + name).classList.add('active');
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  const idx = { Dashboard: 0, History: 1, Add: 2, Settings: 3 }[name];
+  if (idx !== undefined) document.querySelectorAll('.nav button')[idx].classList.add('active');
+  if (name === 'Dashboard') renderDashboard();
+  if (name === 'History') renderHistory();
+  if (name === 'Settings') renderSettings();
+}
+
+// ========== RENDER DASHBOARD ==========
+function renderDashboard() {
+  const d = getData();
+  const records = d.records;
+  const last = records.length ? records[records.length - 1] : null;
+  document.getElementById('kpiLastMileage').textContent = last ? fmtKm(last.mileage) : '—';
+  document.getElementById('kpiLastDate').textContent = last ? last.date : '—';
+
+  // last record preview
+  const prev = document.getElementById('lastRecordPreview');
+  if (last) {
+    prev.innerHTML = renderRecord(last, records.length - 1);
+  } else {
+    prev.innerHTML = '<div class="empty-state">Записей пока нет</div>';
+  }
+
+  // check if mileage was previously entered
+  const saved = d.currentMileage;
+  if (saved) {
+    document.getElementById('currentMileage').value = saved;
+    checkMileage();
+  }
+}
+
+function checkMileage() {
+  const val = document.getElementById('currentMileage').value.trim();
+  if (!val) return;
+  const km = parseInt(val, 10);
+  if (isNaN(km)) return;
+
+  const d = getData();
+  d.currentMileage = km;
+  saveData(d);
+
+  const records = d.records;
+  const intervals = d.intervals;
+
+  if (!records.length) {
+    document.getElementById('dueList').innerHTML = '<div class="empty-state">Сначала добавьте записи ТО</div>';
+    return;
+  }
+
+  // Find last record for each work type to know when it was last done
+  // We'll check intervals against last mileage per work item described in records
+  const lastRecord = records[records.length - 1];
+  const lastMileage = lastRecord.mileage;
+
+  // Build due list based on intervals
+  const dueItems = [];
+
+  intervals.forEach(intv => {
+    if (!intv.km || intv.km <= 0) return;
+    // Find the last mileage when this work was done
+    let lastDoneKm = null;
+    for (let i = records.length - 1; i >= 0; i--) {
+      const r = records[i];
+      if (hasWork(r, intv.id)) {
+        lastDoneKm = r.mileage;
+        break;
+      }
+    }
+    // If never done, use first record mileage or car delivery
+    if (lastDoneKm === null) {
+      lastDoneKm = records[0] ? records[0].mileage : 0;
+    }
+
+    const nextKm = lastDoneKm + intv.km;
+    const remaining = nextKm - km;
+    const pct = km / nextKm;
+
+    dueItems.push({
+      id: intv.id,
+      name: intv.name,
+      nextKm: nextKm,
+      remaining: remaining,
+      pct: pct,
+      lastDoneKm: lastDoneKm
+    });
+  });
+
+  dueItems.sort((a, b) => a.remaining - b.remaining);
+
+  const list = document.getElementById('dueList');
+
+  if (dueItems.length === 0) {
+    list.innerHTML = '<div class="empty-state">Нет активных регламентов</div>';
+    return;
+  }
+
+  let html = '';
+  let hasUrgent = false;
+
+  dueItems.forEach(item => {
+    let cls, label;
+    if (item.remaining <= 0) {
+      cls = 'danger';
+      label = 'Просрочено на ' + fmtKm(Math.abs(item.remaining));
+      hasUrgent = true;
+    } else if (item.remaining <= 3000) {
+      cls = 'warn';
+      label = 'Осталось ' + fmtKm(item.remaining);
+    } else {
+      cls = 'ok';
+      label = 'Осталось ' + fmtKm(item.remaining);
+    }
+
+    html += '<div class="due-item">' +
+      '<div class="dot ' + cls + '"></div>' +
+      '<div class="dname">' + item.name + '</div>' +
+      '<div class="dinfo">' + label + '</div>' +
+      '</div>';
+  });
+
+  list.innerHTML = html;
+
+  // Update KPI colors
+  document.querySelectorAll('.kpi').forEach(k => {
+    k.classList.remove('due', 'warn', 'ok');
+    if (hasUrgent) k.classList.add('due');
+    else if (dueItems.some(i => i.remaining <= 3000)) k.classList.add('warn');
+    else k.classList.add('ok');
+  });
+}
+
+function hasWork(record, intervalId) {
+  const map = {
+    'oil': !!(record.oil || record.oilFilter),
+    'oilFirst': !!(record.oil || record.oilFilter),
+    'airFilter': !!record.airFilter,
+    'cabinFilter': !!record.cabinFilter,
+    'sparkPlugs': !!record.sparkPlugs,
+    'transOil': record.notes && /акпп|dct|dsg|вариатор|cvt|трансмисси/i.test(record.notes),
+    'transferOil': record.notes && /раздат|трансфер|transfer|отбор/i.test(record.notes),
+    'diffOil': record.notes && /мост|дифференциал|редуктор|diff|ред.мост/i.test(record.notes),
+    'couplingOil': record.notes && /муфт|coupling|полный привод|4wd|awd/i.test(record.notes),
+    'coolant': record.notes && /антифриз|охлажд|coolant/i.test(record.notes),
+    'brakeFluid': record.notes && /тормоз|brake/i.test(record.notes),
+    'belt': record.notes && /ремень|генератор|помп|belt/i.test(record.notes),
+  };
+  return map[intervalId] || false;
+}
+
+// ========== RENDER HISTORY ==========
+function renderHistory() {
+  const d = getData();
+  const records = d.records;
+  const list = document.getElementById('historyList');
+
+  if (!records.length) {
+    list.innerHTML = '<div class="empty-state"><div class="ico">📋</div>Записей пока нет</div>';
+    return;
+  }
+
+  // Sort by date descending, then by index
+  const sorted = records.map((r, i) => ({ r, i })).sort((a, b) => {
+    const da = a.r.date || '';
+    const db = b.r.date || '';
+    return da < db ? 1 : da > db ? -1 : b.i - a.i;
+  });
+
+  let html = '';
+  sorted.forEach(({ r, i }) => {
+    html += renderRecord(r, i);
+  });
+  list.innerHTML = html;
+}
+
+function renderRecord(r, idx) {
+  const parts = [];
+  if (r.oil) parts.push('Масло: ' + r.oil);
+  if (r.oilFilter) parts.push('Масляный фильтр: ' + r.oilFilter);
+  if (r.airFilter) parts.push('Воздушный фильтр: ' + r.airFilter);
+  if (r.cabinFilter) parts.push('Салонный фильтр: ' + r.cabinFilter);
+  if (r.sparkPlugs) parts.push('Свечи: ' + r.sparkPlugs);
+  if (r.notes) parts.push(r.notes);
+
+  const nextStr = r.nextMileage ? 'Следующее ТО: ' + fmtKm(r.nextMileage) + ' км' : '';
+
+  return '<div class="record">' +
+    '<button class="edit-btn" onclick="editRecord(' + idx + ')" title="Редактировать">✏️</button>' +
+    '<div><span class="date">' + r.date + '</span> <span class="mileage">' + fmtKm(r.mileage) + ' км</span></div>' +
+    '<div class="work">' + parts.join('; ') + '</div>' +
+    (nextStr ? '<div class="next">' + nextStr + '</div>' : '') +
+    '</div>';
+}
+
+// ========== ADD / EDIT RECORD ==========
+function autoCalcNextMileage() {
+  const mileage = parseInt(document.getElementById('fMileage').value, 10);
+  if (isNaN(mileage)) return;
+  const existing = document.getElementById('fNextMileage').value;
+  if (existing) return;
+  const d = getData();
+  const intervals = d.intervals || DEFAULT_INTERVALS;
+  const oilIntv = intervals.find(i => i.id === 'oil');
+  if (oilIntv && oilIntv.km > 0) {
+    document.getElementById('fNextMileage').value = mileage + oilIntv.km;
+  }
+}
+
+function deleteRecord() {
+  if (!confirm('Удалить эту запись?')) return;
+  const idx = document.getElementById('editIndex').value;
+  if (idx === '') return;
+  const d = getData();
+  d.records.splice(parseInt(idx), 1);
+  saveData(d);
+  cancelEdit();
+  renderDashboard();
+}
+
+function editRecord(idx) {
+  const d = getData();
+  const r = d.records[idx];
+  if (!r) return;
+
+  document.getElementById('editIndex').value = idx;
+  document.getElementById('formTitle').textContent = 'Редактировать запись';
+  document.getElementById('fDate').value = r.date || '';
+  document.getElementById('fMileage').value = r.mileage || '';
+  document.getElementById('fOil').value = r.oil || '';
+  document.getElementById('fOilFilter').value = r.oilFilter || '';
+  document.getElementById('fAirFilter').value = r.airFilter || '';
+  document.getElementById('fCabinFilter').value = r.cabinFilter || '';
+  document.getElementById('fSparkPlugs').value = r.sparkPlugs || '';
+  document.getElementById('fNotes').value = r.notes || '';
+  document.getElementById('fNextMileage').value = r.nextMileage || '';
+  document.getElementById('btnCancelEdit').classList.remove('hidden');
+  document.getElementById('btnDeleteRecord').classList.remove('hidden');
+
+  showPage('Add');
+}
+
+function cancelEdit() {
+  document.getElementById('editIndex').value = '';
+  document.getElementById('formTitle').textContent = 'Новая запись ТО';
+  clearForm();
+  document.getElementById('btnCancelEdit').classList.add('hidden');
+  document.getElementById('btnDeleteRecord').classList.add('hidden');
+  showPage('Dashboard');
+}
+
+function saveRecord() {
+  const idx = document.getElementById('editIndex').value;
+  const date = document.getElementById('fDate').value;
+  const mileage = parseInt(document.getElementById('fMileage').value, 10);
+  if (!date || isNaN(mileage)) { alert('Заполните дату и пробег'); return; }
+
+  const record = {
+    date,
+    mileage,
+    oil: document.getElementById('fOil').value.trim(),
+    oilFilter: document.getElementById('fOilFilter').value.trim(),
+    airFilter: document.getElementById('fAirFilter').value.trim(),
+    cabinFilter: document.getElementById('fCabinFilter').value.trim(),
+    sparkPlugs: document.getElementById('fSparkPlugs').value.trim(),
+    notes: document.getElementById('fNotes').value.trim(),
+    nextMileage: parseInt(document.getElementById('fNextMileage').value, 10) || 0,
+  };
+
+  const d = getData();
+  if (idx !== '') {
+    d.records[parseInt(idx)] = record;
+  } else {
+    d.records.push(record);
+  }
+  // keep sorted by date
+  d.records.sort((a, b) => (a.date + a.mileage) < (b.date + b.mileage) ? -1 : 1);
+  saveData(d);
+
+  clearForm();
+  document.getElementById('editIndex').value = '';
+  document.getElementById('formTitle').textContent = 'Новая запись ТО';
+  document.getElementById('btnCancelEdit').classList.add('hidden');
+  document.getElementById('btnDeleteRecord').classList.add('hidden');
+
+  renderDashboard();
+  showPage('Dashboard');
+}
+
+function clearForm() {
+  ['fDate','fMileage','fOil','fOilFilter','fAirFilter','fCabinFilter','fSparkPlugs','fNotes','fNextMileage']
+    .forEach(id => document.getElementById(id).value = '');
+}
+
+// ========== SETTINGS ==========
+function renderSettings() {
+  const d = getData();
+  const intervals = d.intervals || DEFAULT_INTERVALS;
+
+  const list = document.getElementById('intervalList');
+  let html = '';
+  intervals.forEach((intv, i) => {
+    html += '<div class="interval-row">' +
+      '<span class="iname">' + intv.name + '</span>' +
+      '<input type="number" value="' + intv.km + '" onchange="updateInterval(' + i + ', this.value)" inputmode="numeric">' +
+      '<span style="font-size:13px;color:var(--muted)">км</span>' +
+      '</div>';
+  });
+  list.innerHTML = html;
+
+  document.getElementById('sCarModel').value = d.car?.model || 'Haval Dargo (CC6460AZ22A)';
+  document.getElementById('sVin').value = d.car?.vin || 'LGWFF6A59MH008635';
+  document.getElementById('sYear').value = d.car?.year || '2021';
+
+  const token = localStorage.getItem('yaOAuthToken') || '';
+  document.getElementById('sYaToken').value = token;
+  updateYaStatus();
+  const auto = localStorage.getItem('yaAutoSync') !== 'false';
+  document.getElementById('btnAutoSync').textContent = 'Автосинхронизация: ' + (auto ? 'вкл' : 'выкл');
+}
+
+function updateInterval(idx, val) {
+  const d = getData();
+  if (!d.intervals) d.intervals = JSON.parse(JSON.stringify(DEFAULT_INTERVALS));
+  d.intervals[idx].km = parseInt(val, 10) || 0;
+  saveData(d);
+}
+
+// ========== EXPORT / IMPORT ==========
+function exportData() {
+  const d = getData();
+  const blob = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'dargo-service-book-' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+}
+
+function importData() {
+  document.getElementById('importFile').click();
+}
+
+function handleImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.records && Array.isArray(data.records)) {
+        saveData(data);
+        alert('Данные импортированы');
+        renderDashboard();
+        showPage('Dashboard');
+      } else {
+        alert('Неверный формат файла');
+      }
+    } catch(err) {
+      alert('Ошибка импорта: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function clearAll() {
+  localStorage.removeItem('dargoServiceBook');
+  renderDashboard();
+}
+
+// ========== ЯНДЕКС.ДИСК API ==========
+const YA_PATH = 'Приложения/СервиснаяКнижка/data.json';
+
+function getYaToken() {
+  const t = document.getElementById('sYaToken').value.trim();
+  if (t) localStorage.setItem('yaOAuthToken', t);
+  return t;
+}
+
+function updateYaStatus(msg, err) {
+  const el = document.getElementById('yaSyncStatus');
+  if (msg) el.textContent = msg;
+  if (err) { el.textContent = err; el.style.color = 'var(--danger)'; }
+  else el.style.color = 'var(--muted)';
+}
+
+async function syncToDisk() {
+  const token = getYaToken();
+  if (!token) { updateYaStatus(null, 'Сначала введите OAuth-токен'); return; }
+  updateYaStatus('Сохранение на Диск...');
+  try {
+    const data = JSON.stringify(getData(), null, 2);
+    // 1) get upload URL
+    const resp1 = await fetch('https://cloud-api.yandex.net/v1/disk/resources/upload?path=' + encodeURIComponent(YA_PATH) + '&overwrite=true', {
+      headers: { 'Authorization': 'OAuth ' + token }
+    });
+    const j1 = await resp1.json();
+    if (!j1.href) throw new Error(j1.message || 'Ошибка получения ссылки загрузки');
+    // 2) upload
+    const resp2 = await fetch(j1.href, { method: 'PUT', body: data });
+    if (!resp2.ok) throw new Error('Ошибка загрузки: ' + resp2.status);
+    updateYaStatus('Данные сохранены на Яндекс.Диск');
+  } catch(e) {
+    updateYaStatus(null, 'Ошибка: ' + e.message);
+  }
+}
+
+async function syncFromDisk() {
+  const token = getYaToken();
+  if (!token) { updateYaStatus(null, 'Сначала введите OAuth-токен'); return; }
+  updateYaStatus('Загрузка с Диска...');
+  try {
+    // 1) get download URL
+    const resp1 = await fetch('https://cloud-api.yandex.net/v1/disk/resources/download?path=' + encodeURIComponent(YA_PATH), {
+      headers: { 'Authorization': 'OAuth ' + token }
+    });
+    const j1 = await resp1.json();
+    if (!j1.href) throw new Error(j1.message || 'Файл не найден на Диске');
+    // 2) download
+    const resp2 = await fetch(j1.href);
+    if (!resp2.ok) throw new Error('Ошибка загрузки: ' + resp2.status);
+    const text = await resp2.text();
+    const data = JSON.parse(text);
+    if (data && typeof data === 'object') {
+      data._fromYaDisk = true;
+      saveData(data);
+      renderDashboard();
+      updateYaStatus('Данные загружены с Диска');
+    } else {
+      throw new Error('Неверный формат');
+    }
+  } catch(e) {
+    updateYaStatus(null, 'Ошибка: ' + e.message);
+  }
+}
+
+function enableAutoSync() {
+  const auto = localStorage.getItem('yaAutoSync') !== 'false';
+  localStorage.setItem('yaAutoSync', auto ? 'false' : 'true');
+  document.getElementById('btnAutoSync').textContent = 'Автосинхронизация: ' + (!auto ? 'вкл' : 'выкл');
+}
+
+// Hook into saveData to auto-sync
+const _origSaveData = saveData;
+saveData = function(d) {
+  _origSaveData(d);
+  const auto = localStorage.getItem('yaAutoSync') !== 'false';
+  const token = localStorage.getItem('yaOAuthToken');
+  if (auto && token && !d._fromYaDisk) {
+    // Debounce: don't sync more often than every 2 seconds
+    if (saveData._timer) clearTimeout(saveData._timer);
+    saveData._timer = setTimeout(() => {
+      syncToDisk();
+    }, 2000);
+  }
+  delete d._fromYaDisk;
+};
+
+// Auto-load from Yandex Disk on startup
+(async function loadFromDiskOnStart() {
+  const token = localStorage.getItem('yaOAuthToken');
+  if (!token) { renderDashboard(); return; }
+  try {
+    const resp1 = await fetch('https://cloud-api.yandex.net/v1/disk/resources/download?path=' + encodeURIComponent(YA_PATH), {
+      headers: { 'Authorization': 'OAuth ' + token }
+    });
+    const j1 = await resp1.json();
+    if (!j1.href) { renderDashboard(); return; }
+    const resp2 = await fetch(j1.href);
+    if (!resp2.ok) { renderDashboard(); return; }
+    const text = await resp2.text();
+    const data = JSON.parse(text);
+    if (data && typeof data === 'object') {
+      data._fromYaDisk = true;
+      saveData(data);
+    }
+  } catch(e) { /* first start - no file yet */ }
+  renderDashboard();
+})();
+
+// ========== HELPERS ==========
+function fmtKm(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
+</script>
+</body>
+</html>
