@@ -329,6 +329,19 @@ textarea { resize: vertical; min-height: 60px; }
   </div>
 
   <div class="card">
+    <h2>Синхронизация с Яндекс.Диском</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:8px">Данные будут храниться в облаке и доступны с любого устройства.</p>
+    <label>OAuth-токен Яндекса</label>
+    <input type="password" id="sYaToken" placeholder="Вставьте токен">
+    <div id="yaSyncStatus" style="font-size:13px;color:var(--muted);margin-top:6px"></div>
+    <div class="actions-bar" style="margin-top:8px">
+      <button class="btn btn-small btn-primary" onclick="syncFromDisk()">⬇ Загрузить с Диска</button>
+      <button class="btn btn-small btn-outline" onclick="syncToDisk()">⬆ Сохранить на Диск</button>
+    </div>
+    <button class="btn btn-small btn-outline" onclick="enableAutoSync()" id="btnAutoSync">Автосинхронизация: вкл</button>
+  </div>
+
+  <div class="card">
     <h2>Данные</h2>
     <div class="actions-bar">
       <button class="btn btn-small btn-outline" onclick="importData()">Импорт JSON</button>
@@ -696,6 +709,12 @@ function renderSettings() {
   document.getElementById('sCarModel').value = d.car?.model || 'Haval Dargo (CC6460AZ22A)';
   document.getElementById('sVin').value = d.car?.vin || 'LGWFF6A59MH008635';
   document.getElementById('sYear').value = d.car?.year || '2021';
+
+  const token = localStorage.getItem('yaOAuthToken') || '';
+  document.getElementById('sYaToken').value = token;
+  updateYaStatus();
+  const auto = localStorage.getItem('yaAutoSync') !== 'false';
+  document.getElementById('btnAutoSync').textContent = 'Автосинхронизация: ' + (auto ? 'вкл' : 'выкл');
 }
 
 function updateInterval(idx, val) {
@@ -747,14 +766,122 @@ function clearAll() {
   renderDashboard();
 }
 
+// ========== ЯНДЕКС.ДИСК API ==========
+const YA_PATH = 'Приложения/СервиснаяКнижка/data.json';
+
+function getYaToken() {
+  const t = document.getElementById('sYaToken').value.trim();
+  if (t) localStorage.setItem('yaOAuthToken', t);
+  return t;
+}
+
+function updateYaStatus(msg, err) {
+  const el = document.getElementById('yaSyncStatus');
+  if (msg) el.textContent = msg;
+  if (err) { el.textContent = err; el.style.color = 'var(--danger)'; }
+  else el.style.color = 'var(--muted)';
+}
+
+async function syncToDisk() {
+  const token = getYaToken();
+  if (!token) { updateYaStatus(null, 'Сначала введите OAuth-токен'); return; }
+  updateYaStatus('Сохранение на Диск...');
+  try {
+    const data = JSON.stringify(getData(), null, 2);
+    // 1) get upload URL
+    const resp1 = await fetch('https://cloud-api.yandex.net/v1/disk/resources/upload?path=' + encodeURIComponent(YA_PATH) + '&overwrite=true', {
+      headers: { 'Authorization': 'OAuth ' + token }
+    });
+    const j1 = await resp1.json();
+    if (!j1.href) throw new Error(j1.message || 'Ошибка получения ссылки загрузки');
+    // 2) upload
+    const resp2 = await fetch(j1.href, { method: 'PUT', body: data });
+    if (!resp2.ok) throw new Error('Ошибка загрузки: ' + resp2.status);
+    updateYaStatus('Данные сохранены на Яндекс.Диск');
+  } catch(e) {
+    updateYaStatus(null, 'Ошибка: ' + e.message);
+  }
+}
+
+async function syncFromDisk() {
+  const token = getYaToken();
+  if (!token) { updateYaStatus(null, 'Сначала введите OAuth-токен'); return; }
+  updateYaStatus('Загрузка с Диска...');
+  try {
+    // 1) get download URL
+    const resp1 = await fetch('https://cloud-api.yandex.net/v1/disk/resources/download?path=' + encodeURIComponent(YA_PATH), {
+      headers: { 'Authorization': 'OAuth ' + token }
+    });
+    const j1 = await resp1.json();
+    if (!j1.href) throw new Error(j1.message || 'Файл не найден на Диске');
+    // 2) download
+    const resp2 = await fetch(j1.href);
+    if (!resp2.ok) throw new Error('Ошибка загрузки: ' + resp2.status);
+    const text = await resp2.text();
+    const data = JSON.parse(text);
+    if (data && typeof data === 'object') {
+      data._fromYaDisk = true;
+      saveData(data);
+      renderDashboard();
+      updateYaStatus('Данные загружены с Диска');
+    } else {
+      throw new Error('Неверный формат');
+    }
+  } catch(e) {
+    updateYaStatus(null, 'Ошибка: ' + e.message);
+  }
+}
+
+function enableAutoSync() {
+  const auto = localStorage.getItem('yaAutoSync') !== 'false';
+  localStorage.setItem('yaAutoSync', auto ? 'false' : 'true');
+  document.getElementById('btnAutoSync').textContent = 'Автосинхронизация: ' + (!auto ? 'вкл' : 'выкл');
+}
+
+// Hook into saveData to auto-sync
+const _origSaveData = saveData;
+saveData = function(d) {
+  _origSaveData(d);
+  const auto = localStorage.getItem('yaAutoSync') !== 'false';
+  const token = localStorage.getItem('yaOAuthToken');
+  if (auto && token && !d._fromYaDisk) {
+    // Debounce: don't sync more often than every 2 seconds
+    if (saveData._timer) clearTimeout(saveData._timer);
+    saveData._timer = setTimeout(() => {
+      syncToDisk();
+    }, 2000);
+  }
+  delete d._fromYaDisk;
+};
+
+// Auto-load from Yandex Disk on startup
+(async function loadFromDiskOnStart() {
+  const token = localStorage.getItem('yaOAuthToken');
+  if (!token) { renderDashboard(); return; }
+  try {
+    const resp1 = await fetch('https://cloud-api.yandex.net/v1/disk/resources/download?path=' + encodeURIComponent(YA_PATH), {
+      headers: { 'Authorization': 'OAuth ' + token }
+    });
+    const j1 = await resp1.json();
+    if (!j1.href) { renderDashboard(); return; }
+    const resp2 = await fetch(j1.href);
+    if (!resp2.ok) { renderDashboard(); return; }
+    const text = await resp2.text();
+    const data = JSON.parse(text);
+    if (data && typeof data === 'object') {
+      data._fromYaDisk = true;
+      saveData(data);
+    }
+  } catch(e) { /* first start - no file yet */ }
+  renderDashboard();
+})();
+
 // ========== HELPERS ==========
 function fmtKm(n) {
   if (n === null || n === undefined || isNaN(n)) return '—';
   return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
-// ========== INIT ==========
-renderDashboard();
 </script>
 </body>
 </html>
